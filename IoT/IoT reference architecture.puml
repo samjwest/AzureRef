@@ -1,0 +1,79 @@
+@startuml
+
+!include <tupadr3/common>
+!define ICONURL https://raw.githubusercontent.com/Roemer/plantuml-office/master/office2014
+!includeurl ICONURL/Servers/database_server.puml
+!includeurl ICONURL/Servers/virtual_database_server.puml
+!includeurl ICONURL/Databases/database.puml
+!includeurl ICONURL/Servers/application_server.puml
+!includeurl ICONURL/Concepts/firewall_orange.puml
+!includeurl ICONURL/Concepts/application_windows.puml
+!includeurl ICONURL/Concepts/application_ios.puml
+!includeurl ICONURL/Concepts/application_android.puml
+!includeurl ICONURL/Clouds/cloud_disaster_red.puml
+!includeurl ICONURL/Concepts/website.puml
+!includeurl ICONURL/Concepts/web_services.puml
+!includeurl ICONURL/Users/administrator.puml
+
+!includeurl https://raw.githubusercontent.com/RicardoNiepel/C4-PlantUML/release/1-0/C4_Container.puml
+!define AzurePuml https://raw.githubusercontent.com/RicardoNiepel/Azure-PlantUML/release/1-0/dist
+!includeurl AzurePuml/AzureCommon.puml
+!includeurl AzurePuml/InternetOfThings/all.puml
+'!includeurl AzurePuml/Databases/AzureSqlDatabase.puml
+!includeurl AzurePuml/Databases/AzureCosmosDb.puml
+!includeurl AzurePuml/Compute/AzureFunction.puml
+!includeurl AzurePuml/Analytics/AzureStreamAnalytics.puml
+!includeurl AzurePuml/DevOps/AzureLabServices.puml
+!includeurl AzurePuml/DevOps/AzureDevTestLabs.puml
+!includeurl AzurePuml/DevOps/AzurePipelines.puml
+!includeurl AzurePuml/Identity/AzureActiveDirectory.puml
+!includeurl AzurePuml/Storage/AzureBlobStorage.puml
+
+title Azure IoT Reference Architecture
+'left to right direction
+
+Boundary(things, "Things"){    
+    AzureIoTEdge(edge01, "IoT Edge Devices", "")
+    Container(dps, "Bulk Device\nProvisioning\n\n", "IoT DPS")
+
+    edge01-[hidden]-dps    
+}   
+
+Boundary(insights, "Insights"){
+    AzureIoTHub(hub,"Cloud Gateway","IoT Hub")
+    AzureFunction(etl_func,"Data Transformation", "Function App")
+    AzureCosmosDb(db01, "Warm Path Store", "Cosmos DB")
+    AzureBlobStorage(blob01, "Cold Path Store", "Storage Hub")
+    AzureStreamAnalytics(stream01, "-      Stream Processing      -", "Stream Analytics")
+    Container(rpts, "UI Reporting\nand Tools\n\n", "")
+
+    Rel_Neighbor(hub, stream01, "Stream processing and\nrules evaluation over data")
+    Rel(hub, etl_func, " ")     
+    Rel_Neighbor(etl_func, db01, "Store data")
+    Rel_Neighbor(db01, blob01, " ")
+    Rel_Up(db01, stream01, " ")
+    Rel(stream01, blob01, " ")
+    Rel_Up(stream01, rpts, " ")
+}
+things-[hidden]>insights
+
+Boundary(action, "Action"){
+    AzureDevTestLabs(ml01, "Machine Learning", "Azure Machine Learning")
+    AzurePipelines(pipe01, "Business Integration", "Logic App")
+    AzureActiveDirectory(dir01, "User Management", "Azure AD")
+    dir01-[hidden]-pipe01
+    pipe01-[hidden]-ml01
+}
+
+dps-[hidden]>etl_func
+
+Rel_Neighbor(stream01, pipe01, " ")
+Rel_Neighbor(blob01, ml01, " ")
+Rel_Neighbor(rpts, dir01, " ")
+Rel_Back(rpts, pipe01, "Visualize data and learnings")
+
+'Rel_Back(hub, edge01, "")
+Rel_Neighbor(edge01, hub, "Device\nManagement")
+'Rel(db01, pipe01, " ")
+
+@enduml
