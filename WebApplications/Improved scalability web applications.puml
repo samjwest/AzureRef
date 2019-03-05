@@ -1,0 +1,111 @@
+@startuml
+
+!include <tupadr3/common>
+!define ICONURL https://raw.githubusercontent.com/Roemer/plantuml-office/master/office2014
+!includeurl ICONURL/Servers/database_server.puml
+!includeurl ICONURL/Servers/domain_controller.puml
+!includeurl ICONURL/Databases/database.puml
+!includeurl ICONURL/Servers/application_server.puml
+!includeurl ICONURL/Concepts/firewall_orange.puml
+!includeurl ICONURL/Concepts/application_windows.puml
+!includeurl ICONURL/Concepts/application_ios.puml
+!includeurl ICONURL/Concepts/application_android.puml
+!includeurl ICONURL/Clouds/cloud_disaster_red.puml
+!includeurl ICONURL/Clouds/cloud.puml
+!includeurl ICONURL/Concepts/website.puml
+!includeurl ICONURL/Concepts/web_services.puml
+!includeurl ICONURL/Users/administrator.puml
+!includeurl ICONURL/Devices/device_lcd_monitor.puml
+!includeurl ICONURL/Devices/cell_phone_generic.puml
+!includeurl ICONURL/Devices/device_laptop.puml
+!includeurl ICONURL/Security/lock_protected.puml
+
+!includeurl https://raw.githubusercontent.com/RicardoNiepel/C4-PlantUML/release/1-0/C4_Container.puml
+!define AzurePuml https://raw.githubusercontent.com/RicardoNiepel/Azure-PlantUML/release/1-0/dist
+!includeurl AzurePuml/AzureCommon.puml
+!includeurl AzurePuml/InternetOfThings/all.puml
+!includeurl AzurePuml/Databases/AzureSqlDatabase.puml
+!includeurl AzurePuml/Databases/AzureCosmosDb.puml
+!includeurl AzurePuml/Databases/AzureRedisCache.puml
+!includeurl AzurePuml/Compute/AzureFunction.puml
+'!includeurl AzurePuml/Compute/AzureVirtualMachine.puml
+!includeurl AzurePuml/Compute/AzureAppService.puml
+'!includeurl AzurePuml/Analytics/AzureStreamAnalytics.puml
+'!includeurl AzurePuml/DevOps/AzureLabServices.puml
+'!includeurl AzurePuml/DevOps/AzureDevTestLabs.puml
+'!includeurl AzurePuml/DevOps/AzurePipelines.puml
+!includeurl AzurePuml/Identity/AzureActiveDirectory.puml
+!includeurl AzurePuml/Storage/AzureBlobStorage.puml
+!includeurl AzurePuml/Storage/AzureQueueStorage.puml
+!includeurl AzurePuml/Storage/AzureFileStorage.puml
+'!includeurl AzurePuml/Networking/AzureLoadBalancer.puml
+!includeurl AzurePuml/Networking/AzureDNS.puml
+!includeurl AzurePuml/Networking/AzureApplicationGateway.puml
+!includeurl AzurePuml/Web/AzureWebApp.puml
+!includeurl AzurePuml/Web/AzureCDN.puml
+!includeurl AzurePuml/Web/AzureSearch.puml
+
+'LAYOUT_LEFT_RIGHT
+'left to right direction
+together {
+    AzureDNS(dns, "Azure DNS", "dns")
+    OFF_CLOUD(net, "Internet") #AADDFF    
+    AzureActiveDirectory(aad, "Azure\nActive Directory", "active directory")
+
+    Rel_Up(net, aad, "Authentication")
+    Rel(net, dns, "DNS Lookup")
+}
+
+Boundary(rg, "Resource Group"){
+    together {
+        Boundary(sql01, "Data Storage") #CFDFFF{
+            AzureSqlDatabase(db01, "Azure SQL DB", "database")
+            AzureCosmosDb(db02, "Cosmos DB", "database")
+        }
+
+        AzureRedisCache(redis, "Redis Cache\n", "cache")
+        AzureSearch(search, "Azure Search\n", "index search")
+        db01-[hidden]>search
+        sql01-down->search
+        redis-right-sql01
+        redis-left->asp
+    }
+
+    Boundary(asp, "Web Front End") #CFDFFF{                
+        AzureFunction(func, "Function App\n", "function")
+        AzureQueueStorage(queue, "Queue\n", "service bus")
+        AzureWebApp(web, "App Service\nPlan", "web app")
+        
+        Rel_Neighbor(web, queue, " ")
+        Rel_Neighbor(queue, func, " ")
+    }
+
+    Boundary(store, "Content") #CFDFFF{        
+        AzureBlobStorage(blob, "Stored Blobs", "azure blob storage")
+        AzureFileStorage(file, "Static Content", "azure file storage")
+        blob-[hidden]>file
+    }
+    
+    asp-[hidden]-store
+    sql01-[hidden]-store
+    file-[hidden]>search
+
+    func-[hidden]-file
+
+    AzureApplicationGateway(agw, "Application\nGateway","app gateway")
+    AzureCDN(cdn, "Azure CDN\n", "cdn") 
+    agw-[hidden]-cdn
+    
+    Rel_Neighbor(agw, web, " ")
+    Rel_Neighbor(blob, cdn, " ")
+    
+}
+
+aad-[hidden]>agw
+dns-[hidden]>cdn
+net-[hidden]>agw
+
+net --> cdn
+Rel_Back(agw, net, " ")
+
+@enduml
