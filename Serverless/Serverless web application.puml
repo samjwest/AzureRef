@@ -50,7 +50,7 @@ OFF_APPLICATION_WEB(web_app, "Single-page\nweb\napplication") #FFFFFF
 AzureActiveDirectory(aad, "Azure\nActive Directory", "active directory")
 
 user -[hidden]- web_app
-user -down-> aad
+user .down.> aad
 
 Boundary(static, "Static Content") {
     AzureCDN(cdn, "CDN\n", "")
@@ -79,7 +79,7 @@ web_app --> api: HTTP GET\n(AJAX request)
 blob -[hidden]- pipeline
 db01 -[hidden]- monitor
 
-aad <-- api
-aad <---function
+aad <.. api
+aad <... function
 
 @enduml
