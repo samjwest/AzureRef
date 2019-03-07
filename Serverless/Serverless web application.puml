@@ -1,0 +1,85 @@
+@startuml
+
+!include <tupadr3/common>
+!define ICONURL https://raw.githubusercontent.com/Roemer/plantuml-office/master/office2014
+!includeurl ICONURL/Databases/database.puml
+!includeurl ICONURL/Servers/database_server.puml
+!includeurl ICONURL/Servers/domain_controller.puml
+!includeurl ICONURL/Servers/application_server.puml
+!includeurl ICONURL/Concepts/firewall_orange.puml
+!includeurl ICONURL/Concepts/application_windows.puml
+!includeurl ICONURL/Concepts/application_ios.puml
+!includeurl ICONURL/Concepts/application_android.puml
+!includeurl ICONURL/Concepts/application_web.puml
+!includeurl ICONURL/Concepts/website.puml
+!includeurl ICONURL/Concepts/web_services.puml
+!includeurl ICONURL/Clouds/cloud_disaster_red.puml
+!includeurl ICONURL/Users/administrator.puml
+!includeurl ICONURL/Devices/device_lcd_monitor.puml
+!includeurl ICONURL/Devices/cell_phone_generic.puml
+!includeurl ICONURL/Devices/device_laptop.puml
+!includeurl ICONURL/Security/lock_protected.puml
+!includeurl ICONURL/Users/user.puml
+
+!includeurl https://raw.githubusercontent.com/RicardoNiepel/C4-PlantUML/release/1-0/C4_Container.puml
+!define AzurePuml https://raw.githubusercontent.com/RicardoNiepel/Azure-PlantUML/release/1-0/dist
+!includeurl AzurePuml/AzureCommon.puml
+!includeurl AzurePuml/InternetOfThings/all.puml
+'!includeurl AzurePuml/Databases/AzureSqlDatabase.puml
+!includeurl AzurePuml/Databases/AzureCosmosDb.puml
+!includeurl AzurePuml/Compute/AzureFunction.puml
+!includeurl AzurePuml/Compute/AzureVirtualMachine.puml
+!includeurl AzurePuml/Compute/AzureVirtualMachineScaleSet.puml
+!includeurl AzurePuml/Analytics/AzureStreamAnalytics.puml
+!includeurl AzurePuml/DevOps/AzureLabServices.puml
+!includeurl AzurePuml/DevOps/AzureDevTestLabs.puml
+!includeurl AzurePuml/DevOps/AzurePipelines.puml
+!includeurl AzurePuml/Identity/AzureActiveDirectory.puml
+!includeurl AzurePuml/Storage/AzureBlobStorage.puml
+!includeurl AzurePuml/Management/AzureMonitor.puml
+!includeurl AzurePuml/Networking/AzureLoadBalancer.puml
+!includeurl AzurePuml/Networking/AzureVPNGateway.puml
+!includeurl AzurePuml/Web/AzureCDN.puml
+!includeurl AzurePuml/Web/AzureAPIManagement.puml
+
+title Serverless Web Application on Azure
+left to right direction
+
+OFF_USER(user, "") #FFFFFF
+OFF_APPLICATION_WEB(web_app, "Single-page\nweb\napplication") #FFFFFF
+AzureActiveDirectory(aad, "Azure\nActive Directory", "active directory")
+
+user -[hidden]- web_app
+user -down-> aad
+
+Boundary(static, "Static Content") {
+    AzureCDN(cdn, "CDN\n", "")
+    AzureBlobStorage(blob, "Static website\nhosting", "storage blob")
+    cdn <--- blob
+}
+
+Boundary(dynamic, "API") {
+    AzureAPIManagement(api, "API\nManagement", "api gateway")
+    AzureFunction(function, "Function\nApp", "function")
+    AzureCosmosDb(db01, "Cosmos DB\n", "database")
+    api --> function
+    function --> db01
+}
+
+together {
+    AzurePipelines(pipeline, "CI/CD", "azure pipeline")
+    AzureMonitor(monitor, "End-to-end\nmonitoring", "monitor")    
+}
+
+static -[hidden]> dynamic
+
+web_app --> cdn: HTTP GET
+web_app --> api: HTTP GET\n(AJAX request)
+
+blob -[hidden]- pipeline
+db01 -[hidden]- monitor
+
+aad <-- api
+aad <---function
+
+@enduml
