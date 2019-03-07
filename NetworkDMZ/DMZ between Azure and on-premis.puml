@@ -1,0 +1,170 @@
+@startuml
+
+!include <tupadr3/common>
+!define ICONURL https://raw.githubusercontent.com/Roemer/plantuml-office/master/office2014
+!includeurl ICONURL/Servers/database_server.puml
+!includeurl ICONURL/Servers/domain_controller.puml
+!includeurl ICONURL/Databases/database.puml
+!includeurl ICONURL/Servers/application_server.puml
+!includeurl ICONURL/Concepts/firewall_orange.puml
+!includeurl ICONURL/Concepts/application_windows.puml
+!includeurl ICONURL/Concepts/application_ios.puml
+!includeurl ICONURL/Concepts/application_android.puml
+!includeurl ICONURL/Clouds/cloud_disaster_red.puml
+!includeurl ICONURL/Concepts/website.puml
+!includeurl ICONURL/Concepts/web_services.puml
+!includeurl ICONURL/Users/administrator.puml
+!includeurl ICONURL/Devices/device_lcd_monitor.puml
+!includeurl ICONURL/Devices/cell_phone_generic.puml
+!includeurl ICONURL/Devices/device_laptop.puml
+!includeurl ICONURL/Security/lock_protected.puml
+
+!includeurl https://raw.githubusercontent.com/RicardoNiepel/C4-PlantUML/release/1-0/C4_Container.puml
+!define AzurePuml https://raw.githubusercontent.com/RicardoNiepel/Azure-PlantUML/release/1-0/dist
+!includeurl AzurePuml/AzureCommon.puml
+!includeurl AzurePuml/InternetOfThings/all.puml
+'!includeurl AzurePuml/Databases/AzureSqlDatabase.puml
+!includeurl AzurePuml/Databases/AzureCosmosDb.puml
+!includeurl AzurePuml/Compute/AzureFunction.puml
+!includeurl AzurePuml/Compute/AzureVirtualMachine.puml
+!includeurl AzurePuml/Compute/AzureVirtualMachineScaleSet.puml
+!includeurl AzurePuml/Analytics/AzureStreamAnalytics.puml
+!includeurl AzurePuml/DevOps/AzureLabServices.puml
+!includeurl AzurePuml/DevOps/AzureDevTestLabs.puml
+!includeurl AzurePuml/DevOps/AzurePipelines.puml
+!includeurl AzurePuml/Identity/AzureActiveDirectory.puml
+!includeurl AzurePuml/Storage/AzureBlobStorage.puml
+!includeurl AzurePuml/Networking/AzureLoadBalancer.puml
+!includeurl AzurePuml/Networking/AzureVPNGateway.puml
+
+title Connect an on-premises network to Azure using a VPN gateway
+
+
+Boundary(vnet, "Virtual Network"){
+    Boundary(data_tier, "Data tier"){        
+        AzureVirtualMachine(dvm01, "", "virtual machine")
+        AzureVirtualMachine(dvm02, "", "virtual machine")
+        AzureVirtualMachine(dvm03, "", "virtual machine")
+        OFF_LOCK_PROTECTED(lock01, "NSG") #AADDFF
+        AzureLoadBalancer(load02, "", "Load Balancer")
+        dvm01-[hidden]-dvm02
+        dvm02-[hidden]-dvm03
+        lock01-[hidden]-load02        
+        'load02-[hidden]-dvm03
+    }
+    Rel_Back(dvm01, load02, " ")
+    Rel_Neighbor(load02, dvm02, " ")
+    Rel_Neighbor(load02, dvm03, " ")
+
+    Boundary(bus_tier, "Business tier"){        
+        AzureVirtualMachine(bvm01, "", "virtual machine")
+        AzureVirtualMachine(bvm02, "", "virtual machine")
+        AzureVirtualMachine(bvm03, "", "virtual machine")
+        OFF_LOCK_PROTECTED(lock02, "NSG") #AADDFF
+        AzureLoadBalancer(load03, "", "Load Balancer")
+        bvm01-[hidden]-bvm02
+        bvm02-[hidden]-bvm03 
+        lock02-[hidden]-load03       
+    }
+    Rel_Back(bvm01, load03, " ")
+    Rel_Neighbor(load03, bvm02, " ")
+    Rel_Neighbor(load03, bvm03, " ")  
+    
+
+    together {  
+        Boundary(web_tier, "Web tier"){        
+                  
+            AzureVirtualMachine(wvm01, "", "virtual machine")
+            AzureVirtualMachine(wvm02, "", "virtual machine")
+            AzureVirtualMachine(wvm03, "", "virtual machine")        
+            OFF_LOCK_PROTECTED(lock03, "NSG") #AADDFF  
+            AzureLoadBalancer(load01, "", "Load Balancer")
+            wvm01-[hidden]-wvm02
+            wvm02-[hidden]-wvm03 
+            lock03-[hidden]-load01        
+        }
+        Rel_Back(wvm01, load01, " ")
+        Rel_Neighbor(load01, wvm02, " ")
+        Rel_Neighbor(load01, wvm03, " ")          
+        ' Boundary(mgmt_sub, "Management subnet"){        
+        '     OFF_LOCK_PROTECTED(lock04, "NSG") #AADDFF
+        '     AzureVirtualMachine(mgvm01, "Jumpbox", "virtual machine")
+        ' }
+        'wvm03-[hidden]-lock04
+        'web_tier-[hidden]-mgmt_sub
+        'data_tier-[hidden]-mgmt_sub
+        'bus_tier-[hidden]-mgmt_sub
+    }
+
+    together {  
+        
+        Boundary(dmz_out, "Private DMZ out"){                                
+            OFF_LOCK_PROTECTED(lock06, "NSG") #AADDFF        
+            Container(nic2, "N\nI\nC", "")
+            lock06 -[hidden]- nic2
+        }
+        
+        Boundary(dmz_in, "Private DMZ in"){        
+                        
+            OFF_LOCK_PROTECTED(lock05, "NSG") #AADDFF  
+            AzureLoadBalancer(load05, "", "Load Balancer")
+            Container(nic1, "N\nI\nC", "")        
+            lock05-[hidden]-load05        
+            load05 -right-> nic1
+        }
+
+        AzureVirtualMachineScaleSet(vm_avset,"Availability Set", "")   
+        
+        'dmz_in -[hidden]> dmz_out
+        'dmz_in -[hidden]> vm_avset
+        'vm_avset -[hidden]> dmz_out
+        load05 -[hidden]> vm_avset
+        'vm_avset -[hidden]> lock06
+        lock06 -[hidden]- vm_avset
+        vm_avset -right-> nic2
+        nic1 -right-> vm_avset        
+        
+        Boundary(mgmt_sub, "Management subnet"){        
+            OFF_LOCK_PROTECTED(lock04, "NSG") #AADDFF
+            AzureVirtualMachine(mgvm01, "Jumpbox", "virtual machine")
+        }
+        
+        lock05 -[hidden]> lock06
+        load05-[hidden]-mgvm01
+        dmz_in-[hidden]-mgmt_sub
+        'load05 -[hidden]> vm_avset
+
+    }
+
+    Boundary(gate_sub, "Gateway subnet"){
+        Container(udr, "UDR", "")
+        AzureVPNGateway(gate_int, "Gateway", "")
+        gate_int -up-> udr
+    }
+
+    lock05 -[hidden]- gate_int
+    gate_int -[hidden]> load05
+    gate_int ---> mgvm01
+    udr -right-> load05
+    'udr -[hidden]> lock05
+    lock02 -[hidden]> lock01
+    lock03 -[hidden]> lock02
+    lock06 -[hidden]> lock03
+    
+}
+
+Boundary(onprem, "On-premisis network"){
+    OFF_DEVICE_LCD_MONITOR(mon01, "") #FFFFFF
+    OFF_DEVICE_LCD_MONITOR(mon02, "") #FFFFFF
+    OFF_DEVICE_LCD_MONITOR(mon03, "") #FFFFFF
+    AzureVPNGateway(gate_ext, "Gateway", "")
+
+    mon01 -[hidden]- mon02
+    mon02 -[hidden]- mon03
+    mon02 -[hidden]> gate_ext
+}
+onprem -[hidden]> web_tier
+gate_int -[hidden]- mon03
+gate_ext --> gate_int
+
+@enduml
