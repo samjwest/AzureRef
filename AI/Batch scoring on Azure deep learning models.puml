@@ -1,0 +1,90 @@
+@startuml
+
+!include <tupadr3/common>
+!define ICONURL https://raw.githubusercontent.com/Roemer/plantuml-office/master/office2014
+!includeurl ICONURL/Databases/database.puml
+!includeurl ICONURL/Servers/database_server.puml
+!includeurl ICONURL/Servers/domain_controller.puml
+!includeurl ICONURL/Servers/application_server.puml
+!includeurl ICONURL/Communications/video_workload.puml
+!includeurl ICONURL/Concepts/firewall_orange.puml
+!includeurl ICONURL/Concepts/application_windows.puml
+!includeurl ICONURL/Concepts/application_ios.puml
+!includeurl ICONURL/Concepts/application_android.puml
+!includeurl ICONURL/Concepts/application_web.puml
+!includeurl ICONURL/Concepts/website.puml
+!includeurl ICONURL/Concepts/web_services.puml
+!includeurl ICONURL/Clouds/cloud_disaster_red.puml
+!includeurl ICONURL/Users/administrator.puml
+!includeurl ICONURL/Devices/device_lcd_monitor.puml
+!includeurl ICONURL/Devices/cell_phone_generic.puml
+!includeurl ICONURL/Devices/device_laptop.puml
+!includeurl ICONURL/Devices/device_webcam.puml
+!includeurl ICONURL/Security/lock_protected.puml
+!includeurl ICONURL/Users/user.puml
+
+!includeurl https://raw.githubusercontent.com/RicardoNiepel/C4-PlantUML/release/1-0/C4_Container.puml
+!define AzurePuml https://raw.githubusercontent.com/RicardoNiepel/Azure-PlantUML/release/1-0/dist
+!includeurl AzurePuml/AzureCommon.puml
+!includeurl AzurePuml/Analytics/AzureEventHub.puml
+!includeurl AzurePuml/InternetOfThings/all.puml
+'!includeurl AzurePuml/Databases/AzureSqlDatabase.puml
+!includeurl AzurePuml/Databases/AzureCosmosDb.puml
+!includeurl AzurePuml/Compute/AzureFunction.puml
+!includeurl AzurePuml/Compute/AzureVirtualMachine.puml
+!includeurl AzurePuml/Compute/AzureVirtualMachineScaleSet.puml
+!includeurl AzurePuml/Analytics/AzureStreamAnalytics.puml
+!includeurl AzurePuml/DevOps/AzureLabServices.puml
+!includeurl AzurePuml/DevOps/AzureDevTestLabs.puml
+!includeurl AzurePuml/DevOps/AzurePipelines.puml
+!includeurl AzurePuml/Identity/AzureActiveDirectory.puml
+!includeurl AzurePuml/Integration/AzureLogicApps.puml
+!includeurl AzurePuml/Storage/AzureBlobStorage.puml
+!includeurl AzurePuml/Storage/AzureQueueStorage.puml
+!includeurl AzurePuml/Management/AzureMonitor.puml
+!includeurl AzurePuml/Networking/AzureLoadBalancer.puml
+!includeurl AzurePuml/Networking/AzureVPNGateway.puml
+!includeurl AzurePuml/Web/AzureCDN.puml
+!includeurl AzurePuml/Web/AzureAPIManagement.puml
+
+title Batch Scoring on Azure for Deep Learning Models
+left to right direction
+
+' OFF_DEVICE_WEBCAM(devices, "Devices") #FFFFFF
+
+OFF_VIDEO_WORKLOAD(video, "Video.mp4") #FFFFFF
+
+Boundary(azure, "Azure") {
+
+    Boundary(storage, "Storage") #BBDDFF {
+        AzureBlobStorage(blob, "Blob Storage", "")
+    }
+
+    Boundary(trigger, "Trigger") #BBDDFF {
+        AzureLogicApps(logic, "Logic Apps", "")
+    }
+    storage -[hidden]- trigger
+    
+    Boundary(pipelines, "AML Pipelines") {
+        Container(post_proc, "AML Python Step\n(Postprocess Video)","")
+        Container(style_xfer, "AML MPI Step\n(Style Transfer)","")
+        Container(pre_proc, "AML Python Step\n(Preprocess Video)","")
+        Container(endpoint, "AML Pipeline\nPublished Endpoint","")
+        
+        endpoint -left-> pre_proc
+        pre_proc -left-> style_xfer
+        style_xfer -left-> post_proc
+    }
+    trigger -[hidden]- pipelines
+    logic -[hidden]- endpoint
+    post_proc -[hidden]> logic
+    blob --> logic
+    logic --> endpoint: http request
+    post_proc --> blob
+}
+
+video --> blob
+
+blob -[hidden]> post_proc
+
+@enduml
