@@ -106,6 +106,7 @@ Boundary(backend, "Backend systems") {
 }
 
 logic02 -[hidden]- saas
+api01 -[hidden]- logic01
 client --> api01: HTTP
 api01 -> logic01: HTTP
 
@@ -115,9 +116,12 @@ svc_bus .> evnt_grid
 
 logic02 -> saas: HTTP
 logic02 -> az_svc
+'evnt_grid .right.> az_svc: Events
+'az_svc .up.> evnt_grid
 svc_bus <.. msg_svc: Messages
 
 api01 -----> rest: HTTP
+'aad -[hidden]> client
 aad <. client
 
 

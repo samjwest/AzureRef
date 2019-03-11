@@ -1,0 +1,132 @@
+@startuml
+
+!include <tupadr3/common>
+!define ICONURL https://raw.githubusercontent.com/Roemer/plantuml-office/master/office2014
+!includeurl ICONURL/Servers/database_server.puml
+!includeurl ICONURL/Servers/domain_controller.puml
+!includeurl ICONURL/Databases/database.puml
+!includeurl ICONURL/Servers/application_server.puml
+!includeurl ICONURL/Concepts/firewall_orange.puml
+!includeurl ICONURL/Concepts/application_windows.puml
+!includeurl ICONURL/Concepts/application_ios.puml
+!includeurl ICONURL/Concepts/application_android.puml
+!includeurl ICONURL/Concepts/application_web.puml
+!includeurl ICONURL/Concepts/globe_internet.puml
+!includeurl ICONURL/Concepts/navigation.puml
+!includeurl ICONURL/Concepts/node_generic_blue.puml
+!includeurl ICONURL/Clouds/cloud_disaster_red.puml
+!includeurl ICONURL/Clouds/cloud.puml
+!includeurl ICONURL/Clouds/public_im_cloud_service.puml
+!includeurl ICONURL/Concepts/website.puml
+!includeurl ICONURL/Concepts/web_services.puml
+!includeurl ICONURL/Users/administrator.puml
+!includeurl ICONURL/Devices/device_lcd_monitor.puml
+!includeurl ICONURL/Devices/cell_phone_generic.puml
+!includeurl ICONURL/Devices/device_laptop.puml
+!includeurl ICONURL/Security/lock_protected.puml
+!includeurl ICONURL/Users/user.puml
+!includeurl ICONURL/Services/web_services.puml
+!includeurl ICONURL/Services/3rd_party_service.puml
+
+!includeurl https://raw.githubusercontent.com/RicardoNiepel/C4-PlantUML/release/1-0/C4_Container.puml
+!define AzurePuml https://raw.githubusercontent.com/RicardoNiepel/Azure-PlantUML/release/1-0/dist
+!includeurl AzurePuml/AzureCommon.puml
+!includeurl AzurePuml/InternetOfThings/all.puml
+'!includeurl AzurePuml/Analytics/AzureStreamAnalytics.puml
+!includeurl AzurePuml/Compute/AzureFunction.puml
+!includeurl AzurePuml/Compute/AzureVirtualMachine.puml
+!includeurl AzurePuml/Compute/AzureAppService.puml
+!includeurl AzurePuml/Compute/AzureServiceFabric.puml
+!includeurl AzurePuml/Compute/AzureVirtualMachineScaleSet.puml
+!includeurl AzurePuml/Databases/AzureSqlDatabase.puml
+!includeurl AzurePuml/Databases/AzureCosmosDb.puml
+!includeurl AzurePuml/Databases/AzureRedisCache.puml
+'!includeurl AzurePuml/DevOps/AzureLabServices.puml
+'!includeurl AzurePuml/DevOps/AzureDevTestLabs.puml
+!includeurl AzurePuml/DevOps/AzurePipelines.puml
+!includeurl AzurePuml/General/Azure.puml
+!includeurl AzurePuml/Integration/AzureLogicApps.puml
+!includeurl AzurePuml/Integration/AzureEventGrid.puml
+!includeurl AzurePuml/Integration/AzureServiceBus.puml
+!includeurl AzurePuml/Identity/AzureActiveDirectory.puml
+!includeurl AzurePuml/Management/AzureResourceManager.puml
+!includeurl AzurePuml/Management/AzureMonitor.puml
+!includeurl AzurePuml/Networking/AzureLoadBalancer.puml
+!includeurl AzurePuml/Networking/AzureDNS.puml
+!includeurl AzurePuml/Networking/AzureApplicationGateway.puml
+!includeurl AzurePuml/Networking/AzureVirtualNetwork.puml
+!includeurl AzurePuml/Storage/AzureBlobStorage.puml
+!includeurl AzurePuml/Storage/AzureQueueStorage.puml
+!includeurl AzurePuml/Storage/AzureFileStorage.puml
+!includeurl AzurePuml/Security/AzureKeyVault.puml
+!includeurl AzurePuml/Web/AzureWebApp.puml
+!includeurl AzurePuml/Web/AzureCDN.puml
+!includeurl AzurePuml/Web/AzureSearch.puml
+!includeurl AzurePuml/Web/AzureAPIManagement.puml
+
+
+title Microservices Architecture on Azure Service Fabric
+left to right direction
+
+Boundary(vnet, "Virtual Network"){
+    AzureAPIManagement(api01, "API Management\n(Ingress)", "api gateway")  
+    Boundary(cluster, "Service Fabric Cluster") {
+        AzureLoadBalancer(load01, "Azure load balancer", "load balancer")
+        Boundary(sub01, "subnet" ){
+            AzureVirtualMachineScaleSet(vm_set01, "VM Scale Set", "")
+            OFF_NODE_GENERIC_BLUE(set01_node01) #FFFFFF
+            OFF_NODE_GENERIC_BLUE(set01_node02) #FFFFFF
+            set01_node01 -[hidden]- set01_node02
+            set01_node01 -[hidden]> vm_set01
+        }
+        Boundary(sub02, "subnet" ){
+            AzureVirtualMachineScaleSet(vm_set02, "VM Scale Set", "")
+            together {
+                OFF_NODE_GENERIC_BLUE(set02_node01) #FFFFFF
+                OFF_NODE_GENERIC_BLUE(set02_node02) #FFFFFF
+                OFF_NODE_GENERIC_BLUE(set02_node03) #FFFFFF
+                                
+                'set02_node01 -[hidden]> vm_set02
+                set02_node03 -[hidden]> set02_node02
+                set02_node02 -[hidden]> set02_node01
+            }
+            OFF_NODE_GENERIC_BLUE(set02_node04) #FFFFFF
+            set02_node04 -[hidden]> vm_set02
+            set02_node04 -[hidden]- set02_node02
+            set02_node04 -> set02_node01
+            set02_node04 -> set02_node02
+            set02_node04 -> set02_node03
+        }
+        Boundary(sub03, "subnet" ){
+            AzureVirtualMachineScaleSet(vm_set03, "VM Scale Set", "")
+            OFF_NODE_GENERIC_BLUE(set03_node01) #FFFFFF
+            set03_node01 -[hidden]> vm_set03
+        }
+
+        sub02 -[hidden]> sub01
+        sub03 -[hidden]> load01
+        'sub03 -[hidden]- sub02
+        set03_node01 -[hidden]- set02_node04
+
+        set03_node01 -> set02_node04
+        load01 -down-> vm_set01
+    }
+    api01 -[hidden]- sub03
+}
+
+AzureServiceFabric(svc_fab, "Service Fabric\nExplorer", "")
+OFF_APPLICATION_WEB(client, "Client apps") #FFFFFF
+
+together {
+    AzureMonitor(mon01, "Monitor\n", "")
+    AzurePipelines(pipe01, "Azure\nPipelines","")
+    AzureKeyVault(vault, "Azure Key\nVault", "")
+    mon01 -[hidden]-pipe01
+    pipe01 -[hidden]-vault
+}
+client -down-> api01
+api01 ->  set03_node01
+
+svc_fab -down-> load01
+
+@enduml
