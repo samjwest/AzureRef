@@ -121,12 +121,24 @@ together {
     AzureMonitor(mon01, "Monitor\n", "")
     AzurePipelines(pipe01, "Azure\nPipelines","")
     AzureKeyVault(vault, "Azure Key\nVault", "")
-    mon01 -[hidden]-pipe01
-    pipe01 -[hidden]-vault
+    pipe01 -[hidden]- mon01
+    mon01 -[hidden]- vault
 }
+pipe01 -[hidden]> api01
+
+
+together {
+    AzureSqlDatabase(db01, "External\nData Store\n","sql database")
+    AzureCosmosDb(db02, "External\nData Store\n", "cosmos db")
+    db01 -[hidden]> db02
+}
+
+set02_node01 --> db02
+set02_node03 --> db01
+
 client -down-> api01
 api01 ->  set03_node01
 
-svc_fab -down-> load01
+svc_fab -down--> load01
 
 @enduml
