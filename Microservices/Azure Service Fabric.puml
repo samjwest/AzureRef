@@ -69,7 +69,9 @@ title Microservices Architecture on Azure Service Fabric
 left to right direction
 
 Boundary(vnet, "Virtual Network"){
-    AzureAPIManagement(api01, "API Management\n(Ingress)", "api gateway")  
+    Boundary(sub04, "subnet"){
+        AzureAPIManagement(api01, "API Management\n(Ingress)", "api gateway")  
+    }
     Boundary(cluster, "Service Fabric Cluster") {
         AzureLoadBalancer(load01, "Azure load balancer", "load balancer")
         Boundary(sub01, "subnet" ){
@@ -78,6 +80,7 @@ Boundary(vnet, "Virtual Network"){
             OFF_NODE_GENERIC_BLUE(set01_node02) #FFFFFF
             set01_node01 -[hidden]- set01_node02
             set01_node01 -[hidden]> vm_set01
+            note "Primary node type" as n1 
         }
         Boundary(sub02, "subnet" ){
             AzureVirtualMachineScaleSet(vm_set02, "VM Scale Set", "")
@@ -96,11 +99,13 @@ Boundary(vnet, "Virtual Network"){
             set02_node04 -> set02_node01
             set02_node04 -> set02_node02
             set02_node04 -> set02_node03
+            note "Back-end node type" as n2 
         }
         Boundary(sub03, "subnet" ){
             AzureVirtualMachineScaleSet(vm_set03, "VM Scale Set", "")
             OFF_NODE_GENERIC_BLUE(set03_node01) #FFFFFF
             set03_node01 -[hidden]> vm_set03
+            note "Front-end node type" as n3
         }
 
         sub02 -[hidden]> sub01
@@ -118,9 +123,9 @@ AzureServiceFabric(svc_fab, "Service Fabric\nExplorer", "")
 OFF_APPLICATION_WEB(client, "Client apps") #FFFFFF
 
 together {
-    AzureMonitor(mon01, "Monitor\n", "")
-    AzurePipelines(pipe01, "Azure\nPipelines","")
-    AzureKeyVault(vault, "Azure Key\nVault", "")
+    AzureMonitor(mon01, "Monitor\n", "azure monitor")
+    AzurePipelines(pipe01, "Azure\nPipelines","release pipeline")
+    AzureKeyVault(vault, "Azure Key\nVault", "key vault")
     pipe01 -[hidden]- mon01
     mon01 -[hidden]- vault
 }
@@ -128,8 +133,8 @@ pipe01 -[hidden]> api01
 
 
 together {
-    AzureSqlDatabase(db01, "External\nData Store\n","sql database")
-    AzureCosmosDb(db02, "External\nData Store\n", "cosmos db")
+    AzureSqlDatabase(db01, "External\nData Store\n\n","sql database")
+    AzureCosmosDb(db02, "External\nData Store\n\n", "cosmos db")
     db01 -[hidden]> db02
 }
 
